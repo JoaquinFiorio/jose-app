@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Email Queue System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .queue-demo {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.5s ease;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sistema de Cola de Emails - Prueba</h1>
+        <p>Esta página simula el funcionamiento del sistema de cola visual para emails masivos.</p>
+
+        <div class="test-section">
+            <h3>📧 Simular Envío Masivo</h3>
+            <p>Simula el envío de emails a múltiples usuarios para probar la cola visual.</p>
+            <button class="button" onclick="simulateEmailSend('multiple', 25)">
+                Enviar a 25 usuarios
+            </button>
+            <button class="button" onclick="simulateEmailSend('all', 100)">
+                Enviar a todos (100 usuarios)
+            </button>
+            <button class="button success" onclick="simulateTemplateEmail(50)">
+                Plantilla a 50 usuarios
+            </button>
+            <div id="sendResult" class="result hidden"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Controles de Cola</h3>
+            <p>Controla las colas activas y prueba diferentes estados.</p>
+            <button class="button warning" onclick="pauseQueue()">
+                Pausar Cola Activa
+            </button>
+            <button class="button success" onclick="resumeQueue()">
+                Reanudar Cola
+            </button>
+            <button class="button danger" onclick="dismissQueue()">
+                Descartar Cola
+            </button>
+            <button class="button" onclick="showQueueStats()">
+                Ver Estadísticas
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Funciones de Prueba</h3>
+            <p>Prueba diferentes escenarios y estados del sistema.</p>
+            <button class="button" onclick="simulateErrors()">
+                Simular Errores
+            </button>
+            <button class="button" onclick="testPersistence()">
+                Probar Persistencia
+            </button>
+            <button class="button warning" onclick="clearAllQueues()">
+                Limpiar Todas las Colas
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Notificaciones</h3>
+            <p>Prueba el sistema de notificaciones del navegador.</p>
+            <button class="button" onclick="requestNotifications()">
+                Solicitar Permisos
+            </button>
+            <button class="button success" onclick="testNotification()">
+                Probar Notificación
+            </button>
+        </div>
+    </div>
+
+    <!-- Cola Demo Visual -->
+    <div id="queueDemo" class="queue-demo hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong>Enviando emails...</strong>
+            <button onclick="hideQueue()" style="background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+        </div>
+        <div class="progress-bar">
+            <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="stats">
+            <span id="progressText">0/0</span>
+            <span>
+                <span style="color: #28a745;">✓ <span id="successCount">0</span></span>
+                <span style="color: #dc3545; margin-left: 10px;">✗ <span id="errorCount">0</span></span>
+            </span>
+        </div>
+        <div id="completionMessage" class="hidden" style="margin-top: 10px; padding: 8px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724; font-size: 12px;">
+            ✅ Todos los emails fueron enviados exitosamente
+        </div>
+    </div>
+
+    <script>
+        // Variables globales para la simulación
+        let currentQueue = null;
+        let queueInterval = null;
+
+        // Función para simular envío de emails
+        function simulateEmailSend(type, count) {
+            const batchId = 'batch_' + Date.now();
+            const resultDiv = document.getElementById('sendResult');
+            
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = `
+                <strong>✅ Envío iniciado</strong><br>
+                Tipo: ${type === 'all' ? 'Todos los usuarios' : 'Múltiples usuarios'}<br>
+                Cantidad: ${count} emails<br>
+                Batch ID: ${batchId}
+            `;
+            
+            // Mostrar cola visual
+            showQueue(batchId, count, type);
+            
+            // Simular progreso
+            startQueueProgress(count);
+        }
+
+        // Función para simular envío con plantilla
+        function simulateTemplateEmail(count) {
+            const batchId = 'template_' + Date.now();
+            const resultDiv = document.getElementById('sendResult');
+            
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = `
+                <strong>✅ Envío con plantilla iniciado</strong><br>
+                Plantilla: Bienvenida<br>
+                Cantidad: ${count} emails<br>
+                Batch ID: ${batchId}
+            `;
+            
+            showQueue(batchId, count, 'template');
+            startQueueProgress(count);
+        }
+
+        // Mostrar cola visual
+        function showQueue(batchId, total, type) {
+            const queueDemo = document.getElementById('queueDemo');
+            queueDemo.classList.remove('hidden');
+            
+            currentQueue = {
+                batchId: batchId,
+                total: total,
+                sent: 0,
+                failed: 0,
+                pending: total,
+                type: type
+            };
+            
+            updateQueueDisplay();
+        }
+
+        // Iniciar progreso simulado
+        function startQueueProgress(total) {
+            if (queueInterval) clearInterval(queueInterval);
+            
+            let processed = 0;
+            const errors = Math.floor(Math.random() * 3); // 0-2 errores aleatorios
+            
+            queueInterval = setInterval(() => {
+                if (processed < total) {
+                    processed++;
+                    
+                    // Simular error ocasional
+                    if (processed <= errors) {
+                        currentQueue.failed++;
+                    } else {
+                        currentQueue.sent++;
+                    }
+                    
+                    currentQueue.pending = total - processed;
+                    updateQueueDisplay();
+                    
+                    // Completar cuando se procesen todos
+                    if (processed >= total) {
+                        completeQueue();
+                    }
+                } else {
+                    clearInterval(queueInterval);
+                }
+            }, 200); // Actualizar cada 200ms para demo rápida
+        }
+
+        // Actualizar display de la cola
+        function updateQueueDisplay() {
+            if (!currentQueue) return;
+            
+            const progress = Math.round(((currentQueue.sent + currentQueue.failed) / currentQueue.total) * 100);
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = 
+                `${currentQueue.sent + currentQueue.failed}/${currentQueue.total}`;
+            document.getElementById('successCount').textContent = currentQueue.sent;
+            document.getElementById('errorCount').textContent = currentQueue.failed;
+        }
+
+        // Completar cola
+        function completeQueue() {
+            clearInterval(queueInterval);
+            
+            const completionMsg = document.getElementById('completionMessage');
+            if (currentQueue.failed === 0) {
+                completionMsg.innerHTML = '✅ Todos los emails fueron enviados exitosamente';
+                completionMsg.style.background = '#d4edda';
+                completionMsg.style.borderColor = '#c3e6cb';
+                completionMsg.style.color = '#155724';
+            } else {
+                completionMsg.innerHTML = `⚠️ Completado con ${currentQueue.failed} error(es)`;
+                completionMsg.style.background = '#fff3cd';
+                completionMsg.style.borderColor = '#ffeaa7';
+                completionMsg.style.color = '#856404';
+            }
+            
+            completionMsg.classList.remove('hidden');
+            
+            // Notificación del navegador
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Envío de emails completado', {
+                    body: `Se enviaron ${currentQueue.sent} de ${currentQueue.total} emails`,
+                    icon: '/favicon.ico'
+                });
+            }
+        }
+
+        // Ocultar cola
+        function hideQueue() {
+            document.getElementById('queueDemo').classList.add('hidden');
+            document.getElementById('completionMessage').classList.add('hidden');
+            if (queueInterval) clearInterval(queueInterval);
+            currentQueue = null;
+        }
+
+        // Pausar cola
+        function pauseQueue() {
+            if (queueInterval) {
+                clearInterval(queueInterval);
+                alert('Cola pausada');
+            } else {
+                alert('No hay cola activa para pausar');
+            }
+        }
+
+        // Reanudar cola
+        function resumeQueue() {
+            if (currentQueue && !queueInterval) {
+                startQueueProgress(currentQueue.total);
+                alert('Cola reanudada');
+            } else {
+                alert('No hay cola pausada para reanudar');
+            }
+        }
+
+        // Descartar cola
+        function dismissQueue() {
+            hideQueue();
+            alert('Cola descartada');
+        }
+
+        // Mostrar estadísticas
+        function showQueueStats() {
+            if (currentQueue) {
+                alert(`Estadísticas de la cola:
+                
+Total: ${currentQueue.total}
+Enviados: ${currentQueue.sent}
+Fallidos: ${currentQueue.failed}
+Pendientes: ${currentQueue.pending}
+Progreso: ${Math.round(((currentQueue.sent + currentQueue.failed) / currentQueue.total) * 100)}%`);
+            } else {
+                alert('No hay cola activa');
+            }
+        }
+
+        // Simular errores
+        function simulateErrors() {
+            if (currentQueue) {
+                currentQueue.failed += 5;
+                currentQueue.sent = Math.max(0, currentQueue.sent - 5);
+                updateQueueDisplay();
+                alert('Se simularon 5 errores adicionales');
+            } else {
+                alert('No hay cola activa');
+            }
+        }
+
+        // Probar persistencia
+        function testPersistence() {
+            const testData = {
+                batchId: 'test_persistence_' + Date.now(),
+                total: 50,
+                sent: 30,
+                failed: 2,
+                pending: 18
+            };
+            
+            localStorage.setItem('testEmailQueue', JSON.stringify(testData));
+            alert('Datos de prueba guardados en localStorage. Recarga la página para probar la persistencia.');
+        }
+
+        // Limpiar todas las colas
+        function clearAllQueues() {
+            hideQueue();
+            localStorage.removeItem('testEmailQueue');
+            localStorage.removeItem('activeEmailQueues');
+            alert('Todas las colas han sido limpiadas');
+        }
+
+        // Solicitar permisos de notificación
+        function requestNotifications() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    alert(`Permisos de notificación: ${permission}`);
+                });
+            } else {
+                alert('Las notificaciones no están soportadas en este navegador');
+            }
+        }
+
+        // Probar notificación
+        function testNotification() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Prueba de notificación', {
+                    body: 'Esta es una notificación de prueba del sistema de colas de email',
+                    icon: '/favicon.ico'
+                });
+            } else {
+                alert('Primero debes solicitar permisos de notificación');
+            }
+        }
+
+        // Cargar datos de persistencia al cargar la página
+        window.onload = function() {
+            const savedData = localStorage.getItem('testEmailQueue');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                currentQueue = data;
+                showQueue(data.batchId, data.total, 'restored');
+                updateQueueDisplay();
+                
+                if (data.pending > 0) {
+                    startQueueProgress(data.total);
+                } else {
+                    completeQueue();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

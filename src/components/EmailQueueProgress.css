@@ -1,0 +1,224 @@
+/* Estilos para el componente EmailQueueProgress */
+
+.email-queue-progress {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  min-width: 380px;
+  max-width: 420px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.email-queue-progress.minimized {
+  min-width: 320px;
+}
+
+.email-queue-progress.status-processing {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.email-queue-progress.status-completed {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.email-queue-progress.status-completed-with-errors {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.email-queue-progress.status-error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #e5e7eb;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 5px;
+}
+
+.progress-fill.processing {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.progress-fill.completed {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.progress-fill.completed-with-errors {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.queue-content {
+  padding: 1rem;
+}
+
+.queue-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.queue-stat-item {
+  text-align: center;
+}
+
+.queue-stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.queue-stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.queue-detailed-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.queue-success-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #10b981;
+}
+
+.queue-error-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #ef4444;
+}
+
+.queue-completion-message {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.queue-completion-message.success {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.queue-completion-message.warning {
+  background-color: #fffbeb;
+  border-color: #fed7aa;
+  color: #92400e;
+}
+
+.queue-minimized-content {
+  padding: 0.75rem;
+}
+
+.queue-minimized-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.queue-minimized-progress {
+  width: 4rem;
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.queue-minimized-progress .progress-fill {
+  height: 100%;
+}
+
+.queue-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  min-width: 320px;
+}
+
+.queue-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.email-queue-progress {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.queue-processing-icon {
+  animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .email-queue-progress {
+    left: 1rem;
+    right: 1rem;
+    min-width: auto;
+    max-width: none;
+  }
+}

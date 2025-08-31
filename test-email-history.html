@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email History API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #2d3748;
+        }
+        pre {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 15px;
+            overflow: auto;
+            max-height: 500px;
+        }
+        .error {
+            color: #e53e3e;
+            margin-bottom: 10px;
+        }
+        .success {
+            color: #38a169;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Email History API Test</h1>
+    <p>Esta herramienta te ayudará a verificar el formato de la respuesta de la API de historial de emails.</p>
+    
+    <div>
+        <label for="apiUrl">URL de la API:</label>
+        <input type="text" id="apiUrl" style="width: 100%; padding: 8px; margin: 10px 0;" 
+               value="" placeholder="http://localhost:3000/api/v1/emails/history">
+    </div>
+    
+    <div>
+        <label for="token">Token de autenticación:</label>
+        <input type="text" id="token" style="width: 100%; padding: 8px; margin: 10px 0;" 
+               placeholder="Pega tu token JWT aquí">
+    </div>
+    
+    <button id="testBtn">Probar API</button>
+    
+    <div id="status"></div>
+    
+    <h3>Respuesta:</h3>
+    <pre id="response">Aquí se mostrará la respuesta...</pre>
+    
+    <h3>Estructura detectada:</h3>
+    <pre id="structure">Aquí se mostrará la estructura...</pre>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Intentar cargar la URL de la API desde localStorage
+            const savedApiUrl = localStorage.getItem('emailHistoryApiUrl');
+            if (savedApiUrl) {
+                document.getElementById('apiUrl').value = savedApiUrl;
+            }
+            
+            // Intentar cargar el token desde localStorage
+            const savedToken = localStorage.getItem('emailHistoryToken');
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+            }
+            
+            document.getElementById('testBtn').addEventListener('click', async function() {
+                const apiUrl = document.getElementById('apiUrl').value.trim();
+                const token = document.getElementById('token').value.trim();
+                
+                // Guardar en localStorage para futuras pruebas
+                localStorage.setItem('emailHistoryApiUrl', apiUrl);
+                localStorage.setItem('emailHistoryToken', token);
+                
+                const statusDiv = document.getElementById('status');
+                const responseDiv = document.getElementById('response');
+                const structureDiv = document.getElementById('structure');
+                
+                if (!apiUrl) {
+                    statusDiv.innerHTML = '<div class="error">Por favor, ingresa la URL de la API</div>';
+                    return;
+                }
+                
+                if (!token) {
+                    statusDiv.innerHTML = '<div class="error">Por favor, ingresa un token de autenticación</div>';
+                    return;
+                }
+                
+                statusDiv.innerHTML = '<div>Realizando petición...</div>';
+                
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Mostrar la respuesta completa
+                    responseDiv.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Analizar la estructura
+                    let structure = '';
+                    
+                    if (Array.isArray(data)) {
+                        structure += '✅ La respuesta es un array directamente\n';
+                        structure += `📊 Longitud del array: ${data.length}\n`;
+                        if (data.length > 0) {
+                            structure += '🔍 Estructura del primer elemento:\n';
+                            structure += JSON.stringify(Object.keys(data[0]).reduce((acc, key) => {
+                                acc[key] = typeof data[0][key];
+                                return acc;
+                            }, {}), null, 2);
+                        }
+                    } else if (typeof data === 'object' && data !== null) {
+                        structure += '📦 La respuesta es un objeto\n';
+                        structure += '🔑 Propiedades principales:\n';
+                        structure += JSON.stringify(Object.keys(data), null, 2) + '\n\n';
+                        
+                        if (data.history && Array.isArray(data.history)) {
+                            structure += '✅ data.history es un array\n';
+                            structure += `📊 Longitud del array: ${data.history.length}\n`;
+                            if (data.history.length > 0) {
+                                structure += '🔍 Estructura del primer elemento:\n';
+                                structure += JSON.stringify(Object.keys(data.history[0]).reduce((acc, key) => {
+                                    acc[key] = typeof data.history[0][key];
+                                    return acc;
+                                }, {}), null, 2);
+                            }
+                        } else if (data.emails && Array.isArray(data.emails)) {
+                            structure += '✅ data.emails es un array\n';
+                            structure += `📊 Longitud del array: ${data.emails.length}\n`;
+                            if (data.emails.length > 0) {
+                                structure += '🔍 Estructura del primer elemento:\n';
+                                structure += JSON.stringify(Object.keys(data.emails[0]).reduce((acc, key) => {
+                                    acc[key] = typeof data.emails[0][key];
+                                    return acc;
+                                }, {}), null, 2);
+                            }
+                        } else if (data.data && Array.isArray(data.data)) {
+                            structure += '✅ data.data es un array\n';
+                            structure += `📊 Longitud del array: ${data.data.length}\n`;
+                            if (data.data.length > 0) {
+                                structure += '🔍 Estructura del primer elemento:\n';
+                                structure += JSON.stringify(Object.keys(data.data[0]).reduce((acc, key) => {
+                                    acc[key] = typeof data.data[0][key];
+                                    return acc;
+                                }, {}), null, 2);
+                            }
+                        } else {
+                            structure += '❌ No se encontró un array en las propiedades esperadas (history, emails, data)\n';
+                        }
+                    } else {
+                        structure += '❌ La respuesta no es ni un objeto ni un array\n';
+                    }
+                    
+                    structureDiv.textContent = structure;
+                    statusDiv.innerHTML = '<div class="success">Petición exitosa</div>';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    responseDiv.textContent = `Error: ${error.message}`;
+                    structureDiv.textContent = '';
+                    statusDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
